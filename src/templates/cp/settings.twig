@@ -1,0 +1,138 @@
+{# @var craft \craft\web\twig\variables\CraftVariable #}
+{#
+/**
+ * Elasticsearch plugin for Craft CMS 3.x
+ *
+ * Bring the power of Elasticsearch to you Craft 3 CMS project
+ *
+ * @link      https://www.lahautesociete.com
+ * @copyright Copyright (c) 2018 La Haute Société
+ */
+#}
+
+{% do view.registerAssetBundle("lhs\\elasticsearch\\resources\\CpAssetBundle") %}
+{% import "_includes/forms" as forms %}
+<style>
+    table.editable tbody tr td {
+        text-align: left;
+    }
+
+    .fieldlayoutform {
+        text-transform: none;
+    }
+
+    .fieldlayoutform h2 {
+        text-transform: uppercase;
+    }
+</style>
+<div class="elastic-branding-container">
+    <h2>{{ 'Elasticsearch connection'|t('elasticsearch') }}</h2>
+
+    {% if settings['elasticsearchComponentConfig'] is not null %}
+        <p class="light">{{ 'These settings will be ignored since <code>elasticsearchComponentConfig</code> is present in the configuration file.'|t('elasticsearch')|raw }}</p>
+    {% endif %}
+
+    {% if settings.hasErrors('global') %}
+        {% include "_includes/forms/errorList" with { errors: settings.getErrors('global') } %}
+    {% endif %}
+
+    {{ forms.textField({
+        first:        true,
+        label:        'Elasticsearch endpoint URL'|t('elasticsearch'),
+        instructions: 'The URL of the Elasticsearch instance (ie. elastic.example.com:9200)'|t('elasticsearch'),
+        placeholder:  'elastic.example.com:9200',
+        id:           'elasticsearchEndpoint',
+        name:         'elasticsearchEndpoint',
+        value:        settings['elasticsearchEndpoint'],
+        errors:       settings.getErrors('elasticsearchEndpoint'),
+        disabled:     settings['elasticsearchComponentConfig'] is not null,
+    }) }}
+
+    {{ forms.lightswitchField({
+        label:  'Authentication required'|t('elasticsearch'),
+        id:     'isAuthEnabled',
+        name:   'isAuthEnabled',
+        on:     settings['isAuthEnabled'],
+        toggle: 'auth_settings',
+        disabled:     settings['elasticsearchComponentConfig'] is not null,
+    }) }}
+
+    <div id="auth_settings"{% if not settings['isAuthEnabled'] %} class="hidden" {% endif %}>
+        {{ forms.textField({
+            label:    'Username'|t('elasticsearch'),
+            id:       'username',
+            name:     'username',
+            value:    settings['username'],
+            errors:   settings.getErrors('username'),
+            disabled: settings['elasticsearchComponentConfig'] is not null,
+        }) }}
+
+        {{ forms.passwordField({
+            label:    'Password'|t('elasticsearch'),
+            id:       'password',
+            name:     'password',
+            value:    settings['password'],
+            errors:   settings.getErrors('password'),
+            disabled: settings['elasticsearchComponentConfig'] is not null,
+        }) }}
+    </div>
+
+    <hr>
+
+    <h2>{{ 'Search term highlight'|t('elasticsearch') }}</h2>
+    <p>{{ 'HTML tags used to wrap the search term in order to highlight it in  the search results'|t('elasticsearch') }}</p>
+    {{ forms.textField({
+        label:  'Before'|t('elasticsearch'),
+        id:     'highlight_pre_tags',
+        name:   'highlight[pre_tags]',
+        value:  settings['highlight']['pre_tags'],
+        errors: settings.getErrors('highlight_pre_tags'),
+    }) }}
+
+    {{ forms.textField({
+        label:  'After'|t('elasticsearch'),
+        id:     'highlight_post_tags',
+        name:   'highlight[post_tags]',
+        value:  settings['highlight']['post_tags'],
+        errors: settings.getErrors('highlight_post_tags'),
+    }) }}
+
+    <hr>
+
+    <h2>{{ 'Blacklisted entries types'|t('elasticsearch') }}</h2>
+    <p class="light">{{ 'Never index:'|t('elasticsearch') }}</p>
+    <div class="field">
+        <table id="sites" class="shadow-box editable">
+            <thead>
+            <tr>
+                <th scope="col" class="thin">{{ 'Type'|t('elasticsearch') }}</th>
+                <th scope="col">{{ 'Section'|t('elasticsearch') }}</th>
+                <th scope="col">{{ 'Entry Type'|t('elasticsearch') }}</th>
+                <th scope="col" class="thin"></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for section in craft.app.sections.allSections %}
+                {% for entryType in section.entryTypes %}
+                    <tr data-id="default">
+                        <th>{{ section.type|ucfirst }}</th>
+                        <td>{{ section.name }}</td>
+                        <td>{{ entryType.name }}</td>
+                        <td>
+                            {% if entryType.id in settings['blacklistedEntryTypes'] %}
+                                {% set switchState = 1 %}
+                            {% else %}
+                                {% set switchState = 0 %}
+                            {% endif %}
+                            {{ forms.lightswitch({"name": "blacklistedEntryTypes[]", "value": entryType.id, "on": switchState, "small": true}) }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+
+    {% include 'elasticsearch/components/elastic-branding' %}
+</div>
