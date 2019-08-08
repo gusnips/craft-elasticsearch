@@ -34,6 +34,118 @@ use yii\elasticsearch\Exception;
  */
 class Elasticsearch extends Component
 {
+    // Index Manipulation - Methods related to adding to / removing from the index
+    // =========================================================================
+
+    /**
+     * Index the given `$element` into Elasticsearch
+     * @param Element $element
+     * @return string|null A string explaining why the entry wasn't reindexed or `null` if it was reindexed
+     * @throws Exception If an error occurs while saving the record to the Elasticsearch server
+     * @throws IndexElementException If an error occurs while getting the indexable content of the entry. Check the previous property of the exception for more details
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\db\Exception
+     * @throws \yii\db\StaleObjectException
+     */
+    public function indexElement(Element $element)
+    {
+        $reason = $this->getReasonForNotReindexing($element);
+        if ($reason !== null) {
+            return $reason;
+        }
+
+        Craft::info("Indexing entry {$element->url}", __METHOD__);
+        // turn on image thumb creation on the fly
+        $generalConfig = Craft::$app->getConfig()->getGeneral()->generateTransformsBeforePageLoad = true;
+        $esRecord = $this->getElasticRecordForElement($element);
+        $esRecord->title = strip_tags($element->title);
+		$esRecord->slug = $element->slug;
+        $esRecord->uri = $element->uri;
+		$esRecord->postDate = $element->postDate->format('c');
+		if(isset($element->summary)){
+			$esRecord->summary = strip_tags($element->summary);
+		}
+		if(isset($element->tags)){
+		    $fullContent = [];
+		    $contents = $element->getFieldValue('tags')->all();
+			foreach($contents as $content){
+				$fullContent[] = ['title'=>$content->title, 'slug'=>$content->slug];
+			}
+			$esRecord->tags = $fullContent;
+		}
+
+		if(isset($element->category)){
+			$fullContent = [];
+            $namesContent = [];
+			$contents = $element->getFieldValue('category')->all();
+			foreach($contents as $content){
+				$fullContent[] = ['title'=>$content->title, 'slug'=>$content->slug];
+                $namesContent[] = $content->title;
+			}
+			$esRecord->category = $fullContent;
+            $esRecord->categoryNames = $namesContent;
+        }
+
+        if(isset($element->author)){
+		    $esRecord->authorId = $element->authorId;
+		    $fullContent = $element->author->getAttributes();
+		    unset($fullContent['seo']);
+            $esRecord->author = $this->_getObjectAttributesWithImages($fullContent);
+            $esRecord->username = $element->author->username;
+        }
+
+        if(isset($element->section)){
+		    $esRecord->sectionId = $element->sectionId;
+            $esRecord->section = $this->_getObjectAttributesWithImages($element->section->getAttributes());
+            $esRecord->sectionSlug = $element->section->handle;
+        }
+
+        if(isset($element->contentPost)){
+			$fullContent = [];
+			$text = '';
+			$contents = $element->getFieldValue('contentPost')->all();
+			foreach($contents as $content){
+				$contentAttributes = $content->getAttributes();
+				unset($contentAttributes['owner']);
+				unset($contentAttributes['seo']);
+				$fullContent[] = $contentAttributes;
+				if(isset($contentAttributes['block'])){
+					$text = $text . " " . $contentAttributes['block'];
+				}
+			}
+			$esRecord->content = $fullContent;
+			$esRecord->text = strip_tags($text);
+        }
+        $esRecord->result = $this->_getObjectAttributesWithImages($element->getAttributes());
+        $isSuccessfullySaved = $esRecord->save();
+        if (!$isSuccessfullySaved) {
+            throw new Exception('Could not save elasticsearch record');
+        }
+        // turn off image creation on the fly
+		$generalConfig = Craft::$app->getConfig()->getGeneral()->generateTransformsBeforePageLoad = false;
+
+        return null;
+    }
+
+
+    /**
+     * Removes an entry from  the Elasticsearch index
+     * @param Element $element The entry to delete
+     * @return int The number of rows deleted
+     * @throws Exception If the entry to be deleted cannot be found
+     */
+    public function deleteElement(Element $element): int
+    {
+        Craft::info("Deleting entry #{$element->id}: {$element->url}", __METHOD__);
+
+        ElasticsearchRecord::$siteId = $element->siteId;
+
+        return ElasticsearchRecord::deleteAll(['_id' => $element->id]);
+    }
+
+
+
     // Elasticsearch / Craft communication
     // =========================================================================
 
@@ -178,114 +290,6 @@ class Elasticsearch extends Component
                 $this->triggerErrorEvent($e);
             }
         }
-    }
-
-
-    // Index Manipulation - Methods related to adding to / removing from the index
-    // =========================================================================
-
-    /**
-     * Index the given `$element` into Elasticsearch
-     * @param Element $element
-     * @return string|null A string explaining why the entry wasn't reindexed or `null` if it was reindexed
-     * @throws Exception If an error occurs while saving the record to the Elasticsearch server
-     * @throws IndexElementException If an error occurs while getting the indexable content of the entry. Check the previous property of the exception for more details
-     * @throws \GuzzleHttp\Exception\GuzzleException
-     * @throws \yii\base\InvalidConfigException
-     * @throws \yii\db\Exception
-     * @throws \yii\db\StaleObjectException
-     */
-    public function indexElement(Element $element)
-    {
-        $reason = $this->getReasonForNotReindexing($element);
-        if ($reason !== null) {
-            return $reason;
-        }
-
-        Craft::info("Indexing entry {$element->url}", __METHOD__);
-        // turn on image thumb creation on the fly
-        $generalConfig = Craft::$app->getConfig()->getGeneral()->generateTransformsBeforePageLoad = true;
-        $esRecord = $this->getElasticRecordForElement($element);
-        $esRecord->title = strip_tags($element->title);
-		$esRecord->slug = $element->slug;
-        $esRecord->uri = $element->uri;
-		$esRecord->postDate = $element->postDate->format('c');
-		if(isset($element->summary)){
-			$esRecord->summary = strip_tags($element->summary);
-		}
-		if(isset($element->tags)){
-		    $fullContent = [];
-		    $contents = $element->getFieldValue('tags')->all();
-			foreach($contents as $content){
-				$fullContent[] = ['title'=>$content->title, 'slug'=>$content->slug];
-			}
-			$esRecord->tags = $fullContent;
-		}
-
-		if(isset($element->category)){
-			$fullContent = [];
-			$contents = $element->getFieldValue('category')->all();
-			foreach($contents as $content){
-				$fullContent[] = ['title'=>$content->title, 'slug'=>$content->slug];
-			}
-			$esRecord->category = $fullContent;
-        }
-
-        if(isset($element->author)){
-		    $esRecord->authorId = $element->authorId;
-		    $fullContent = $element->author->getAttributes();
-		    unset($fullContent['seo']);
-            $esRecord->author = $this->_getObjectAttributesWithImages($fullContent);
-            $esRecord->username = $element->author->username;
-        }
-
-        if(isset($element->section)){
-		    $esRecord->sectionId = $element->sectionId;
-            $esRecord->section = $this->_getObjectAttributesWithImages($element->section->getAttributes());
-            $esRecord->sectionSlug = $element->section->handle;
-        }
-
-        if(isset($element->contentPost)){
-			$fullContent = [];
-			$text = '';
-			$contents = $element->getFieldValue('contentPost')->all();
-			foreach($contents as $content){
-				$contentAttributes = $content->getAttributes();
-				unset($contentAttributes['owner']);
-				unset($contentAttributes['seo']);
-				$fullContent[] = $contentAttributes;
-				if(isset($contentAttributes['block'])){
-					$text = $text . " " . $contentAttributes['block'];
-				}
-			}
-			$esRecord->content = $fullContent;
-			$esRecord->text = strip_tags($text);
-        }
-        $esRecord->result = $this->_getObjectAttributesWithImages($element->getAttributes());
-        $isSuccessfullySaved = $esRecord->save();
-        if (!$isSuccessfullySaved) {
-            throw new Exception('Could not save elasticsearch record');
-        }
-        // turn off image creation on the fly
-		$generalConfig = Craft::$app->getConfig()->getGeneral()->generateTransformsBeforePageLoad = false;
-
-        return null;
-    }
-
-
-    /**
-     * Removes an entry from  the Elasticsearch index
-     * @param Element $element The entry to delete
-     * @return int The number of rows deleted
-     * @throws Exception If the entry to be deleted cannot be found
-     */
-    public function deleteElement(Element $element): int
-    {
-        Craft::info("Deleting entry #{$element->id}: {$element->url}", __METHOD__);
-
-        ElasticsearchRecord::$siteId = $element->siteId;
-
-        return ElasticsearchRecord::deleteAll(['_id' => $element->id]);
     }
 
 

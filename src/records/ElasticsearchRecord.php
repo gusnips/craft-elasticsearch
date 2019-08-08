@@ -31,7 +31,7 @@ class ElasticsearchRecord extends ActiveRecord
     public static $siteId;
 
     private $_schema;
-    private $_attributes = ['title', 'summary', 'text', 'slug', 'uri', 'postDate', 'category', 'tags', 'sectionSlug', 'sectionId', 'authorId', 'author', 'username', 'section', 'content', 'result'];
+    private $_attributes = ['title', 'summary', 'text', 'slug', 'uri', 'postDate', 'category', 'categoryNames', 'tags', 'sectionSlug', 'sectionId', 'authorId', 'author', 'username', 'section', 'content', 'result'];
     private $_element;
     private $_queryParams;
     private $_highlightParams;
@@ -336,6 +336,9 @@ class ElasticsearchRecord extends ActiveRecord
                     ],
                     'category'    => [
                         'type'  => 'object',
+                    ],
+                    'categoryNames'    => [
+                        'type'  => 'keyword',
                     ],
                     'tags'    => [
                         'type'  => 'object',
