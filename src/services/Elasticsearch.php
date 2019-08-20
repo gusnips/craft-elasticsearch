@@ -99,6 +99,7 @@ class Elasticsearch extends Component
 		    $esRecord->sectionId = $element->sectionId;
             $esRecord->section = $this->_getObjectAttributesWithImages($element->section->getAttributes());
             $esRecord->sectionSlug = $element->section->handle;
+            $esRecord->sectionName = $element->section->name;
         }
 
         if(isset($element->contentPost)){
