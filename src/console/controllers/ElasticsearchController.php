@@ -102,7 +102,9 @@ class ElasticsearchController extends Controller
         Console::startProgress(0, $elementCount);
 
         foreach ($elements as $index => $elementParams) {
-            $element = $elementParams['type'] === 'craft\\commerce\\elements\\Product' ? craft\commerce\Plugin::getInstance()->getProducts()->getProductById($elementParams['elementId'], $elementParams['siteId']) : Craft::$app->getEntries()->getEntryById($elementParams['elementId'], $elementParams['siteId']);
+            $element = $elementParams['type'] === 'craft\\commerce\\elements\\Product' ? 
+                craft\commerce\Plugin::getInstance()->getProducts()->getProductById($elementParams['elementId'], $elementParams['siteId']) : 
+                Craft::$app->getEntries()->getEntryById($elementParams['elementId'], $elementParams['siteId']);
 
             if ($element === null) {
                 throw new IndexElementException(Craft::t(

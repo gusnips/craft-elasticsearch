@@ -118,7 +118,11 @@ class Elasticsearch extends Component
 			$esRecord->content = $fullContent;
 			$esRecord->text = strip_tags($text);
         }
-        $esRecord->result = $this->_getObjectAttributesWithImages($element->getAttributes());
+        $result = $this->_getObjectAttributesWithImages($element->getAttributes());
+        if(isset($result['seo']['metaBundleSettings']['seoImageTransform'])){
+            $result['seo']['metaBundleSettings']['seoImageTransform'] = boolval($result['seo']['metaBundleSettings']['seoImageTransform']);
+        }
+        $esRecord->result = $result;
         $isSuccessfullySaved = $esRecord->save();
         if (!$isSuccessfullySaved) {
             throw new Exception('Could not save elasticsearch record');
