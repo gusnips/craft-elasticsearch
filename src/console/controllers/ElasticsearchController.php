@@ -66,29 +66,29 @@ class ElasticsearchController extends Controller
      * @throws \yii\console\Exception
      * @throws \yii\elasticsearch\Exception
      */
-    public function actionUpdateAll(): int
-    {
-        $this->stdout(PHP_EOL);
-        $this->stdout('Craft Elasticsearch plugin | Update all elements', Console::FG_GREEN);
-        $this->stdout(PHP_EOL);
+    // public function actionUpdateAll(): int
+    // {
+    //     $this->stdout(PHP_EOL);
+    //     $this->stdout('Craft Elasticsearch plugin | Update all elements', Console::FG_GREEN);
+    //     $this->stdout(PHP_EOL);
 
-        // Get elements
-        $elements = $this->getElementsToReindex();
+    //     // Get elements
+    //     $elements = $this->getElementsToReindex();
 
-        // Reindex elements
-        $exitCode = $this->updateElements($elements);
+    //     // Reindex elements
+    //     $exitCode = $this->updateElements($elements);
 
-        // Print summary message
-        $this->stdout(PHP_EOL);
-        $message = $this->ansiFormat('Done', Console::FG_GREEN);
-        if ($exitCode > 0) {
-            $message = $this->ansiFormat('Done with errors', Console::FG_RED);
-        }
-        $this->stdout($message);
-        $this->stdout(PHP_EOL);
+    //     // Print summary message
+    //     $this->stdout(PHP_EOL);
+    //     $message = $this->ansiFormat('Done', Console::FG_GREEN);
+    //     if ($exitCode > 0) {
+    //         $message = $this->ansiFormat('Done with errors', Console::FG_RED);
+    //     }
+    //     $this->stdout($message);
+    //     $this->stdout(PHP_EOL);
 
-        return $exitCode;
-    }
+    //     return $exitCode;
+    // }
 
     /**
      * Remove index & create an empty one for all sites
@@ -175,39 +175,39 @@ class ElasticsearchController extends Controller
      * @throws \yii\console\Exception
      * @throws \yii\elasticsearch\Exception
      */
-    protected function updateElements(array $elements): int
-    {
-        $elementCount = count($elements);
-        $processedElementCount = 0;
-        $errorCount = 0;
-        Console::startProgress(0, $elementCount);
+    // protected function updateElements(array $elements): int
+    // {
+    //     $elementCount = count($elements);
+    //     $processedElementCount = 0;
+    //     $errorCount = 0;
+    //     Console::startProgress(0, $elementCount);
 
-        foreach ($elements as $index => $elementParams) {
-            $element = $elementParams['type'] === 'craft\\commerce\\elements\\Product' ? 
-                craft\commerce\Plugin::getInstance()->getProducts()->getProductById($elementParams['elementId'], $elementParams['siteId']) : 
-                Craft::$app->getEntries()->getEntryById($elementParams['elementId'], $elementParams['siteId']);
+    //     foreach ($elements as $index => $elementParams) {
+    //         $element = $elementParams['type'] === 'craft\\commerce\\elements\\Product' ? 
+    //             craft\commerce\Plugin::getInstance()->getProducts()->getProductById($elementParams['elementId'], $elementParams['siteId']) : 
+    //             Craft::$app->getEntries()->getEntryById($elementParams['elementId'], $elementParams['siteId']);
 
-            if ($element === null) {
-                throw new IndexElementException(Craft::t(
-                    ElasticsearchPlugin::TRANSLATION_CATEGORY,
-                    'No such element (element #{elementId} / site #{siteId}',
-                    ['elementId' => $elementParams->elementId, 'siteId' => $elementParams->siteId]
-                ));
-            }
+    //         if ($element === null) {
+    //             throw new IndexElementException(Craft::t(
+    //                 ElasticsearchPlugin::TRANSLATION_CATEGORY,
+    //                 'No such element (element #{elementId} / site #{siteId}',
+    //                 ['elementId' => $elementParams->elementId, 'siteId' => $elementParams->siteId]
+    //             ));
+    //         }
 
-            $result = ElasticsearchPlugin::getInstance()->service->indexElement($element);
+    //         $result = ElasticsearchPlugin::getInstance()->service->indexElement($element);
 
-            if ($result === null) {
-                Console::updateProgress(++$processedElementCount, $elementCount);
-            } else {
-                $errorCount++;
-                Console::updateProgress(++$processedElementCount, $elementCount);
-                $this->stderr($result);
-            }
-        }
+    //         if ($result === null) {
+    //             Console::updateProgress(++$processedElementCount, $elementCount);
+    //         } else {
+    //             $errorCount++;
+    //             Console::updateProgress(++$processedElementCount, $elementCount);
+    //             $this->stderr($result);
+    //         }
+    //     }
 
-        Console::endProgress();
+    //     Console::endProgress();
 
-        return $errorCount === 0 ? ExitCode::OK : ExitCode::UNSPECIFIED_ERROR;
-    }
+    //     return $errorCount === 0 ? ExitCode::OK : ExitCode::UNSPECIFIED_ERROR;
+    // }
 }
