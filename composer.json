@@ -1,5 +1,5 @@
 {
-    "name": "la-haute-societe/craft-elasticsearch",
+    "name": "gusnips/craft-elasticsearch",
     "description": "Bring the power of Elasticsearch to your Craft CMS projects.",
     "type": "craft-plugin",
     "version": "1.2.2",
@@ -10,17 +10,11 @@
         "craft-plugin",
         "elasticsearch"
     ],
-    "support": {
-        "docs": "https://github.com/la-haute-societe/craft-elasticsearch",
-        "issues": "https://github.com/la-haute-societe/craft-elasticsearch/issues?state=open",
-        "email": "dev@lahautesociete.com",
-        "source": "https://github.com/la-haute-societe/craft-elasticsearch"
-    },
-    "license": "proprietary",
+    "license": "",
     "authors": [
         {
-            "name": "La Haute Société",
-            "homepage": "https://www.lahautesociete.com"
+            "name": "Gustavo Salome",
+            "homepage": "https://github.com/gusnips"
         }
     ],
     "require": {
@@ -37,7 +31,6 @@
         "name": "Elasticsearch",
         "handle": "elasticsearch",
         "schemaVersion": "1.2.2",
-        "changelogUrl": "https://raw.githubusercontent.com/la-haute-societe/craft-elasticsearch/master/CHANGELOG.md",
         "components": {
             "elasticsearch": "lhs\\elasticsearch\\services\\Elasticsearch"
         },

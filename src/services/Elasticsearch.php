@@ -58,6 +58,7 @@ class Elasticsearch extends Component
         Craft::info("Indexing entry {$element->url}", __METHOD__);
         // turn on image thumb creation on the fly
         $generalConfig = Craft::$app->getConfig()->getGeneral()->generateTransformsBeforePageLoad = true;
+
         $esRecord = $this->getElasticRecordForElement($element);
         $esRecord->title = strip_tags($element->title);
 		$esRecord->slug = $element->slug;
@@ -127,6 +128,7 @@ class Elasticsearch extends Component
         if (!$isSuccessfullySaved) {
             throw new Exception('Could not save elasticsearch record');
         }
+        
         // turn off image creation on the fly
 		$generalConfig = Craft::$app->getConfig()->getGeneral()->generateTransformsBeforePageLoad = false;
 
