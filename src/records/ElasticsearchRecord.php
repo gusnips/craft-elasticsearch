@@ -324,6 +324,10 @@ class ElasticsearchRecord extends ActiveRecord
                     'sectionSlug'=> [
                         'type'  => 'keyword',
                     ],
+                    'sectionName'=> [
+                        'type'  => 'text',
+                        'fielddata' => true,
+                    ],
                     'authorId'    => [
                         'type'  => 'integer',
                     ],
@@ -338,7 +342,8 @@ class ElasticsearchRecord extends ActiveRecord
                         'type'  => 'object',
                     ],
                     'categoryNames'    => [
-                        'type'  => 'keyword',
+                        'type'  => 'text',
+                        'fielddata' => true,
                     ],
                     'tags'    => [
                         'type'  => 'object',
